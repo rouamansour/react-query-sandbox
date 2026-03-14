@@ -1,121 +1,212 @@
 import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from './assets/vite.svg'
-import heroImg from './assets/hero.png'
-import './App.css'
+import './App.css';
+import { useQuery, useMutation } from '@tanstack/react-query'
 
-function App() {
-  const [count, setCount] = useState(0)
+// API functions 
+const fetchUsers = async () => {
+  const res = await fetch('https://jsonplaceholder.typicode.com/users')
+  if (!res.ok) throw new Error('Network error')
+  return res.json()
+}
+
+const fetchPost = async (id) => {
+  const res = await fetch(`https://jsonplaceholder.typicode.com/posts/${id}`)
+  if (!res.ok) throw new Error('Network error')
+  return res.json()
+}
+
+const createPost = async (newPost) => {
+  const res = await fetch('https://jsonplaceholder.typicode.com/posts', {
+    method: 'POST',
+    body: JSON.stringify(newPost),
+    headers: { 'Content-Type': 'application/json' },
+  })
+  return res.json()
+}
+
+// Test 1 : useQuery basic 
+function Test1() {
+  const { data, isLoading, isError, error } = useQuery({
+    queryKey: ['users'],
+    queryFn: fetchUsers,
+  })
+
+  if (isLoading) return <p className="status">⏳ Loading...</p>
+  if (isError)   return <p className="status error">❌ Error: {error.message}</p>
 
   return (
-    <>
-      <section id="center">
-        <div className="hero">
-          <img src={heroImg} className="base" width="170" height="179" alt="" />
-          <img src={reactLogo} className="framework" alt="React logo" />
-          <img src={viteLogo} className="vite" alt="Vite logo" />
-        </div>
-        <div>
-          <h1>Get started</h1>
-          <p>
-            Edit <code>src/App.jsx</code> and save to test <code>HMR</code>
-          </p>
-        </div>
-        <button
-          className="counter"
-          onClick={() => setCount((count) => count + 1)}
-        >
-          Count is {count}
-        </button>
-      </section>
-
-      <div className="ticks"></div>
-
-      <section id="next-steps">
-        <div id="docs">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#documentation-icon"></use>
-          </svg>
-          <h2>Documentation</h2>
-          <p>Your questions, answered</p>
-          <ul>
-            <li>
-              <a href="https://vite.dev/" target="_blank">
-                <img className="logo" src={viteLogo} alt="" />
-                Explore Vite
-              </a>
-            </li>
-            <li>
-              <a href="https://react.dev/" target="_blank">
-                <img className="button-icon" src={reactLogo} alt="" />
-                Learn more
-              </a>
-            </li>
-          </ul>
-        </div>
-        <div id="social">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#social-icon"></use>
-          </svg>
-          <h2>Connect with us</h2>
-          <p>Join the Vite community</p>
-          <ul>
-            <li>
-              <a href="https://github.com/vitejs/vite" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#github-icon"></use>
-                </svg>
-                GitHub
-              </a>
-            </li>
-            <li>
-              <a href="https://chat.vite.dev/" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#discord-icon"></use>
-                </svg>
-                Discord
-              </a>
-            </li>
-            <li>
-              <a href="https://x.com/vite_js" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#x-icon"></use>
-                </svg>
-                X.com
-              </a>
-            </li>
-            <li>
-              <a href="https://bsky.app/profile/vite.dev" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#bluesky-icon"></use>
-                </svg>
-                Bluesky
-              </a>
-            </li>
-          </ul>
-        </div>
-      </section>
-
-      <div className="ticks"></div>
-      <section id="spacer"></section>
-    </>
+    <ul className="list">
+      {data.map(user => (
+        <li key={user.id} className="list-item">
+          <strong>{user.name}</strong>
+          <span>{user.email}</span>
+        </li>
+      ))}
+    </ul>
   )
 }
 
-export default App
+// Test 2 : dynamic queryKey 
+function Test2() {
+  const [postId, setPostId] = useState(1)
+
+  const { data, isLoading, isFetching } = useQuery({
+    queryKey: ['post', postId],      // re-fetches automatically when postId changes
+    queryFn: () => fetchPost(postId),
+  })
+
+  return (
+    <div>
+      <div className="nav-row">
+        <button onClick={() => setPostId(id => Math.max(1, id - 1))} disabled={postId === 1}>
+          ◀ Prev
+        </button>
+        <span className="badge">Post #{postId}</span>
+        <button onClick={() => setPostId(id => id + 1)}>Next ▶</button>
+      </div>
+
+      {isLoading || isFetching
+        ? <p className="status">⏳ Loading post {postId}...</p>
+        : (
+          <div className="card">
+            <h3>{data?.title}</h3>
+            <p>{data?.body}</p>
+          </div>
+        )
+      }
+    </div>
+  )
+}
+
+// Test 3 : useMutation 
+function Test3() {
+  const [title, setTitle] = useState('')
+  const [body, setBody]   = useState('')
+
+  const mutation = useMutation({ mutationFn: createPost })
+
+  const handleSubmit = () => {
+    if (!title.trim()) return
+    mutation.mutate({ title, body, userId: 1 })
+  }
+
+  return (
+    <div>
+      <div className="form">
+        <input
+          placeholder="Post title"
+          value={title}
+          onChange={e => setTitle(e.target.value)}
+        />
+        <textarea
+          placeholder="Post body"
+          value={body}
+          onChange={e => setBody(e.target.value)}
+          rows={3}
+        />
+        <button onClick={handleSubmit} disabled={mutation.isPending}>
+          {mutation.isPending ? '⏳ Sending...' : '🚀 Create post'}
+        </button>
+      </div>
+
+      {mutation.isSuccess && (
+        <div className="result success">
+          ✅ Post created! Server returned ID: <strong>{mutation.data.id}</strong>
+        </div>
+      )}
+      {mutation.isError && (
+        <div className="result error">❌ Error: {mutation.error.message}</div>
+      )}
+    </div>
+  )
+}
+
+// Test 4 : advanced options 
+function Test4() {
+  const [enabled, setEnabled] = useState(true)
+
+  const { data, isLoading, isFetching, dataUpdatedAt } = useQuery({
+    queryKey: ['users-advanced'],
+    queryFn: fetchUsers,
+    staleTime:            1000 * 60 * 5,  // fresh for 5 min → no background refetch
+    retry:                2,              // retry twice on error
+    refetchOnWindowFocus: false,          // no refetch on tab focus
+    enabled,                             // disable/enable the query on demand
+  })
+
+  const lastUpdate = dataUpdatedAt
+    ? new Date(dataUpdatedAt).toLocaleTimeString()
+    : '—'
+
+  return (
+    <div>
+      <div className="options-grid">
+        <div className="option-badge">staleTime: 5 min</div>
+        <div className="option-badge">retry: 2</div>
+        <div className="option-badge">refetchOnWindowFocus: false</div>
+        <div className="option-badge">enabled: {enabled ? 'true' : 'false'}</div>
+      </div>
+
+      <div className="nav-row" style={{ marginTop: 12 }}>
+        <button onClick={() => setEnabled(v => !v)}>
+          {enabled ? '⏸ Disable query' : '▶ Enable query'}
+        </button>
+        <span className="badge">Last update: {lastUpdate}</span>
+        {isFetching && <span className="badge fetching">🔄 Fetching...</span>}
+      </div>
+
+      {!enabled && <p className="status">Query is disabled — no fetch will happen.</p>}
+      {isLoading && enabled && <p className="status">⏳ Loading...</p>}
+
+      {data && (
+        <ul className="list">
+          {data.slice(0, 4).map(user => (
+            <li key={user.id} className="list-item">
+              <strong>{user.name}</strong>
+              <span>{user.email}</span>
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  )
+}
+
+// Tabs
+const TABS = [
+  { id: 1, label: 'Test 1 — useQuery',       component: <Test1 /> },
+  { id: 2, label: 'Test 2 — Dynamic key',    component: <Test2 /> },
+  { id: 3, label: 'Test 3 — useMutation',    component: <Test3 /> },
+  { id: 4, label: 'Test 4 — Advanced',       component: <Test4 /> },
+]
+
+// App component with tab navigation
+export default function App() {
+  const [activeTab, setActiveTab] = useState(1)
+  const current = TABS.find(t => t.id === activeTab)
+
+  return (
+    <>
+      <div className="app">
+        <h1>⚡ React Query — 4 Tests</h1>
+
+        <div className="tabs">
+          {TABS.map(t => (
+            <button
+              key={t.id}
+              className={`tab-btn ${activeTab === t.id ? 'active' : ''}`}
+              onClick={() => setActiveTab(t.id)}
+            >
+              {t.label}
+            </button>
+          ))}
+        </div>
+
+        <div className="panel">
+          <h2>{current.label}</h2>
+          {current.component}
+        </div>
+      </div>
+    </>
+  )
+}
