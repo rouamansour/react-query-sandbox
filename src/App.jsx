@@ -59,14 +59,14 @@ function Test2() {
     <div>
       <div className="nav-row">
         <button onClick={() => setPostId(id => Math.max(1, id - 1))} disabled={postId === 1}>
-          ◀ Prev
+           Prev
         </button>
         <span className="badge">Post #{postId}</span>
-        <button onClick={() => setPostId(id => id + 1)}>Next ▶</button>
+        <button onClick={() => setPostId(id => id + 1)}>Next</button>
       </div>
 
       {isLoading || isFetching
-        ? <p className="status">⏳ Loading post {postId}...</p>
+        ? <p className="status">Loading post {postId}...</p>
         : (
           <div className="card">
             <h3>{data?.title}</h3>
@@ -105,7 +105,7 @@ function Test3() {
           rows={3}
         />
         <button onClick={handleSubmit} disabled={mutation.isPending}>
-          {mutation.isPending ? '⏳ Sending...' : '🚀 Create post'}
+          {mutation.isPending ? ' Sending...' : 'Create post'}
         </button>
       </div>
 
@@ -115,7 +115,7 @@ function Test3() {
         </div>
       )}
       {mutation.isError && (
-        <div className="result error">❌ Error: {mutation.error.message}</div>
+        <div className="result error">Error: {mutation.error.message}</div>
       )}
     </div>
   )
@@ -149,14 +149,14 @@ function Test4() {
 
       <div className="nav-row" style={{ marginTop: 12 }}>
         <button onClick={() => setEnabled(v => !v)}>
-          {enabled ? '⏸ Disable query' : '▶ Enable query'}
+          {enabled ? '⏸ Disable query' : 'Enable query'}
         </button>
         <span className="badge">Last update: {lastUpdate}</span>
-        {isFetching && <span className="badge fetching">🔄 Fetching...</span>}
+        {isFetching && <span className="badge fetching">Fetching...</span>}
       </div>
 
       {!enabled && <p className="status">Query is disabled — no fetch will happen.</p>}
-      {isLoading && enabled && <p className="status">⏳ Loading...</p>}
+      {isLoading && enabled && <p className="status">Loading...</p>}
 
       {data && (
         <ul className="list">
@@ -172,7 +172,6 @@ function Test4() {
   )
 }
 
-// Tabs
 const TABS = [
   { id: 1, label: 'Test 1 — useQuery',       component: <Test1 /> },
   { id: 2, label: 'Test 2 — Dynamic key',    component: <Test2 /> },
@@ -180,7 +179,6 @@ const TABS = [
   { id: 4, label: 'Test 4 — Advanced',       component: <Test4 /> },
 ]
 
-// App component with tab navigation
 export default function App() {
   const [activeTab, setActiveTab] = useState(1)
   const current = TABS.find(t => t.id === activeTab)
@@ -188,7 +186,7 @@ export default function App() {
   return (
     <>
       <div className="app">
-        <h1>⚡ React Query — 4 Tests</h1>
+        <h1> React Query — 4 Tests</h1>
 
         <div className="tabs">
           {TABS.map(t => (
